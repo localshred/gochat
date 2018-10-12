@@ -7,7 +7,7 @@ import (
 
 func main() {
 	config := readConfig()
-	startServer(config)
+	startServer(config.Server)
 }
 
 func printErrorAndExit(err error, exitCode int) {
