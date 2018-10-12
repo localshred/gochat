@@ -21,8 +21,8 @@ func startServer(config *chatServerConfig) {
 		Logger:  logger,
 	}
 
+	fmt.Printf("Server listening on %v\n", config.Port)
 	if err := server.ListenAndServe(); err != nil {
 		printErrorAndExit(err, -1)
 	}
-	fmt.Printf("Server listening on %v", config.Port)
 }
