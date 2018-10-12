@@ -1,0 +1,7 @@
+{
+    "server": {
+        "host": "localhost",
+        "logFile": "logs/server.log",
+        "port": 5555
+    }
+}

@@ -1,21 +1,28 @@
 package main
 
+import (
+	"encoding/json"
+	"io/ioutil"
+)
+
 var configFile = "./configs/config.json"
 
 type chatServerConfig struct {
-	Host    string
-	Port    int
-	LogFile string
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	LogFile string `json:"logFile"`
 }
 
 func readConfig() *chatServerConfig {
-	defaultConfig := &chatServerConfig{
+	config := &chatServerConfig{
 		Host:    "localHost",
 		LogFile: "logs/server.log",
 		Port:    5555,
 	}
-	// if rawJSON, err := ioutil.ReadFile(configFile); err != nil {
-	// panic(err)
-	// }
-	return defaultConfig
+	rawJSON, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		printErrorAndExit(err, -1)
+	}
+	json.Unmarshal([]byte(rawJSON), &config)
+	return config
 }
