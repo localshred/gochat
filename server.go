@@ -2,37 +2,27 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	telnet "github.com/reiver/go-telnet"
 )
-func main() {
-	config := readConfig()
+
+func startServer(config *chatServerConfig) {
+	address := fmt.Sprintf("%s:%v", config.Host, config.Port)
 	handler := telnet.EchoHandler
+	logger, logFile, err := createLogger(config.LogFile)
+	if err != nil {
+		printErrorAndExit(err, -1)
+	}
+	defer logFile.Close()
+
 	server := &telnet.Server{
-		Addr:    fmt.Sprintf("%s:%v", config.Host, config.Port),
+		Addr:    address,
 		Handler: handler,
+		Logger:  logger,
 	}
 
-	err := server.ListenAndServe()
-	if nil != err {
-		fmt.Fprintln(os.Stderr, "Unable to start server: ", err)
-		os.Exit(-1)
+	if err := server.ListenAndServe(); err != nil {
+		printErrorAndExit(err, -1)
 	}
 	fmt.Printf("Server listening on %v", config.Port)
-}
-
-type chatServerConfig struct {
-	Host    string
-	Port    int
-	LogFile string
-}
-
-func readConfig() *chatServerConfig {
-	defaultConfig := &chatServerConfig{
-		Host:    "localHost",
-		LogFile: "logs/server.log",
-		Port:    5555,
-	}
-	return defaultConfig
 }
