@@ -6,7 +6,7 @@ Basic client-server chat program working over Telnet.
 
 * [x] Chat Server
 * [x] Config settings read from local config file (port, ip, log file)
-* [ ] Multiple client connections via telnet to send messages to the server
+* [x] Multiple client connections via telnet to send messages to the server
 * [ ] Relay new messages to all clients with timestamp and username
 * [ ] All messages logged locally
 * [ ] Optional: Rest API to post messages
