@@ -7,7 +7,8 @@ import (
 
 func main() {
 	config := readConfig()
-	startServer(config.Server)
+	telnetServer := &TelnetServer{config.Server}
+	telnetServer.start()
 }
 
 func printErrorAndExit(err error, exitCode int) {

@@ -6,7 +6,13 @@ import (
 	telnet "github.com/reiver/go-telnet"
 )
 
-func startServer(config *chatServerConfig) {
+// TelnetServer represents a wrapped telnet server
+type TelnetServer struct {
+	Config *chatServerConfig
+}
+
+func (telnetServer *TelnetServer) start() {
+	config := telnetServer.Config
 	address := fmt.Sprintf("%s:%v", config.Host, config.Port)
 	handler := telnet.EchoHandler
 	logger, logFile, err := createLogger(config.LogFile)
