@@ -28,11 +28,13 @@ Type exit<return> to leave chat.
 type Client struct {
 	Channel *Channel
 	Conn    net.Conn
+	Context *Context
 	User    *User
 }
 
 func (client *Client) connected() {
 	client.Conn.Write([]byte(welcomeMessage))
+	client.Context.Logger.Debugf("Client connected from %s", client.Conn.RemoteAddr())
 }
 
 func (client *Client) listen() {
