@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Channel holds properties related to channels
 type Channel struct {
@@ -22,5 +25,5 @@ func (channel *Channel) appendMessage(message string, user *User) (msg *Message)
 }
 
 func (channel *Channel) String() string {
-	return channel.Name
+	return fmt.Sprintf("#%s", channel.Name)
 }

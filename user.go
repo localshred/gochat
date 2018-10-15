@@ -1,10 +1,12 @@
 package main
 
+import "fmt"
+
 // User holds user properties
 type User struct {
 	Username string
 }
 
 func (user *User) String() string {
-	return user.Username
+	return fmt.Sprintf("@%s", user.Username)
 }
