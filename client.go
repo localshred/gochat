@@ -46,6 +46,7 @@ func (client *Client) connected() {
 	client.writeString(welcomeMessage)
 
 	client.login()
+	client.listen()
 }
 
 func (client *Client) listen() {

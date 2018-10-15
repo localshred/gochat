@@ -56,6 +56,6 @@ func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
 		User:    &User{"anonymous"},
 	}
 	telnetServer.Clients = append(telnetServer.Clients, client)
-	client.connected()
-	go client.listen()
+	telnetServer.Context.Logger.Debugf("Connected Clients: %v", len(telnetServer.Clients))
+	go client.connected()
 }
