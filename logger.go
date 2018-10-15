@@ -11,7 +11,7 @@ type telnetLogger struct {
 }
 
 func (logger *telnetLogger) Debug(v ...interface{}) {
-	logger.logger.Print("[DEBUG] ", v)
+	logger.logger.Print(fmt.Sprintf("[DEBUG] %v", v...))
 }
 
 func (logger *telnetLogger) Debugf(format string, v ...interface{}) {
@@ -19,7 +19,7 @@ func (logger *telnetLogger) Debugf(format string, v ...interface{}) {
 }
 
 func (logger *telnetLogger) Error(v ...interface{}) {
-	logger.logger.Print("[ERROR] ", v)
+	logger.logger.Print(fmt.Sprintf("[ERROR] %v", v...))
 }
 
 func (logger *telnetLogger) Errorf(format string, v ...interface{}) {
@@ -27,7 +27,7 @@ func (logger *telnetLogger) Errorf(format string, v ...interface{}) {
 }
 
 func (logger *telnetLogger) Trace(v ...interface{}) {
-	logger.logger.Print("[TRACE] ", v)
+	logger.logger.Print(fmt.Sprintf("[TRACE] %v", v...))
 }
 
 func (logger *telnetLogger) Tracef(format string, v ...interface{}) {
@@ -35,7 +35,7 @@ func (logger *telnetLogger) Tracef(format string, v ...interface{}) {
 }
 
 func (logger *telnetLogger) Warn(v ...interface{}) {
-	logger.logger.Print("[WARN] ", v)
+	logger.logger.Print(fmt.Sprintf("[WARN] %v", v...))
 }
 
 func (logger *telnetLogger) Warnf(format string, v ...interface{}) {
@@ -48,7 +48,7 @@ func createLogger(logFileName string) (*telnetLogger, *os.File, error) {
 		return nil, nil, err
 	}
 
-	logger := log.New(logFile, "server", log.Ldate|log.Ltime|log.LUTC)
+	logger := log.New(logFile, "server - ", log.Ldate|log.Ltime|log.LUTC)
 	return &telnetLogger{logger}, logFile, nil
 }
 

@@ -7,7 +7,9 @@ import (
 
 func main() {
 	config := readConfig()
-	telnetServer := &TelnetServer{config.Server}
+	telnetServer := &TelnetServer{
+		Config: config.Server,
+	}
 	telnetServer.start()
 }
 
