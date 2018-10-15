@@ -13,7 +13,8 @@ type Channel struct {
 // Messages are stored as a slice in a map keyed by the channel name
 var channelsMessages = map[*Channel][]*Message{}
 
-func (channel *Channel) appendMessage(message string, user *User) (msg *Message) {
+// TODO lock mutex
+func (channel *Channel) appendMessage(context *Context, message string, user *User) (msg *Message) {
 	msg = &Message{
 		Channel: channel,
 		Message: message,
@@ -21,6 +22,7 @@ func (channel *Channel) appendMessage(message string, user *User) (msg *Message)
 		User:    user,
 	}
 	channelsMessages[channel] = append(channelsMessages[channel], msg)
+	context.Logger.Debugf("[%s] %s: %s", channel, user.Username, message)
 	return
 }
 

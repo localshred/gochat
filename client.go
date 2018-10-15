@@ -59,9 +59,13 @@ func (client *Client) listen() {
 		if ok := client.Scanner.Scan(); !ok {
 			break
 		}
-		line := client.Scanner.Text()
-		client.writeLine(fmt.Sprintf("You wrote this message to the channel:\n'%s'", line))
+		channelMessage := client.Scanner.Text()
+		client.dispatchMessage(channelMessage)
 	}
+}
+
+func (client *Client) dispatchMessage(channelMessage string) {
+	client.Channel.appendMessage(client.Context, channelMessage, client.User)
 }
 
 func (client *Client) login() {
@@ -110,7 +114,7 @@ func (client *Client) writeLine(line string) (err error) {
 }
 
 func (client *Client) writePrompt() {
-	client.writeString(fmt.Sprintf("%s: ", client.User))
+	client.writeString(fmt.Sprintf("%s: ", client.User.Username))
 }
 
 func (client *Client) writeString(line string) (err error) {
