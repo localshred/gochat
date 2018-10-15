@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 )
 
 var (
@@ -48,6 +49,19 @@ func (client *Client) connected() {
 }
 
 func (client *Client) listen() {
+	defer func() {
+		client.Context.Logger.Debugf("Client disconnected from %s", client.Conn.RemoteAddr())
+		client.Conn.Close()
+	}()
+	for {
+		client.writePrompt()
+
+		if ok := client.Scanner.Scan(); !ok {
+			break
+		}
+		line := client.Scanner.Text()
+		client.writeLine(fmt.Sprintf("You wrote this message to the channel:\n'%s'", line))
+	}
 }
 
 func (client *Client) login() {
@@ -95,6 +109,9 @@ func (client *Client) writeLine(line string) (err error) {
 	return client.writeString(fmt.Sprintf("%s\n", line))
 }
 
+func (client *Client) writePrompt() {
+	client.writeString(fmt.Sprintf("%s: ", client.User))
+}
 
 func (client *Client) writeString(line string) (err error) {
 	if _, err = client.Writer.WriteString(line); nil != err {
