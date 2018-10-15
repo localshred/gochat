@@ -43,9 +43,54 @@ func (client *Client) connected() {
 	client.Scanner.Split(bufio.ScanLines)
 
 	client.writeString(welcomeMessage)
+
+	client.login()
 }
 
 func (client *Client) listen() {
+}
+
+func (client *Client) login() {
+	defer func() {
+		if r := recover(); r != nil {
+			client.Context.Logger.Errorf("Unable to login [%T]: %v", r, r)
+		}
+	}()
+
+	if username, err := client.prompt("Username: "); nil != err {
+		panic(err)
+	} else {
+		client.User.Username = getWord(username, 0)
+	}
+
+	if channel, err := client.prompt("Channel: "); nil != err {
+		panic(err)
+	} else {
+		client.Channel.Name = getWord(channel, 0)
+		client.Context.Logger.Debugf("User %s signed into channel %s", client.User, client.Channel)
+	}
+
+	client.writeLine(fmt.Sprintf("%s joined %s along with %v other users\n", client.User, client.Channel, 3))
+}
+
+func getWord(line string, index int) string {
+	words := strings.Fields(line)
+	return strings.TrimSpace(words[index])
+}
+
+func (client *Client) prompt(question string) (line string, err error) {
+	if err = client.writeString(question); nil != err {
+		panic(err)
+	}
+
+	ok := client.Scanner.Scan()
+	if !ok {
+		panic(client.Scanner.Err())
+	}
+	line = client.Scanner.Text()
+	return
+}
+
 func (client *Client) writeLine(line string) (err error) {
 	return client.writeString(fmt.Sprintf("%s\n", line))
 }
