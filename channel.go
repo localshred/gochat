@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -11,6 +12,16 @@ type Channel struct {
 	Messages []*Message
 	Mux      *sync.Mutex
 	Users    map[string]*User
+}
+
+func listChannels(channels map[string]*Channel) []string {
+	list := []string{}
+	for channelName := range channels {
+		fmt.Println("channelName", channelName)
+		list = append(list, channelName)
+	}
+	sort.Strings(list)
+	return list
 }
 
 func newChannel(name string) *Channel {

@@ -26,8 +26,26 @@ func routeNotFound(handler *HTTPHandler, response http.ResponseWriter, request *
 	return writeResponse(response, 404, "text/plain", []byte("Not Found"))
 }
 
+func getChannels(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	channels := listChannels(*handler.Channels)
+	payload := map[string][]string{
+		"channels": channels,
+	}
+
+	contentType := "application/json"
+	statusCode = 200
+	bytes, err := json.Marshal(payload)
+	if nil != err {
+		contentType = "text/plain"
+		statusCode = 404
+		bytes = []byte(err.Error())
+	}
+	return writeResponse(response, statusCode, contentType, bytes)
+}
+
 var endpoints = map[string]map[string]handlerFunc{
 	"GET": map[string]handlerFunc{
+		"/channels.*": getChannels,
 	},
 }
 
