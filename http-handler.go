@@ -27,8 +27,8 @@ type ChannelsJSON struct {
 
 func handleGetChannels(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
 	channels := listChannels(*handler.Channels)
-	payload := map[string][]string{
-		"channels": channels,
+	payload := &ChannelsJSON{
+		Channels: channels,
 	}
 
 	contentType := "application/json"
