@@ -54,6 +54,20 @@ func (client *Client) connected() {
 	go client.receive()
 }
 
+func (client *Client) dispatchMessage(text string) {
+	client.Dispatcher <- &Message{
+		Channel: client.Channel,
+		Message: text,
+		Time:    time.Now().UTC(),
+		User:    client.User,
+	}
+}
+
+func getWord(line string, index int) string {
+	words := strings.Fields(line)
+	return strings.TrimSpace(words[index])
+}
+
 func (client *Client) listen() {
 	defer func() {
 		client.Context.Logger.Debugf("Client disconnected from %s", client.Conn.RemoteAddr())
@@ -67,26 +81,6 @@ func (client *Client) listen() {
 		}
 		channelMessage := client.Scanner.Text()
 		client.dispatchMessage(channelMessage)
-	}
-}
-
-func (client *Client) receive() {
-	for {
-		select {
-		case message := <-client.Receiver:
-			client.writeString("\r")
-			client.writeLine(message.String())
-		}
-		client.writePrompt()
-	}
-}
-
-func (client *Client) dispatchMessage(text string) {
-	client.Dispatcher <- &Message{
-		Channel: client.Channel,
-		Message: text,
-		Time:    time.Now().UTC(),
-		User:    client.User,
 	}
 }
 
@@ -110,17 +104,7 @@ func (client *Client) login() {
 		client.Context.Logger.Debugf("User %s signed into channel %s", client.User, client.Channel)
 	}
 
-	client.Dispatcher <- &Message{
-		Channel: client.Channel,
-		Message: fmt.Sprintf("/join %s %s", client.Channel.Name, client.User.Username),
-		Time:    time.Now().UTC(),
-		User:    client.User,
-	}
-}
-
-func getWord(line string, index int) string {
-	words := strings.Fields(line)
-	return strings.TrimSpace(words[index])
+	client.dispatchMessage(fmt.Sprintf("/join %s %s", client.Channel.Name, client.User.Username))
 }
 
 func (client *Client) prompt(question string) (line string, err error) {
@@ -134,6 +118,17 @@ func (client *Client) prompt(question string) (line string, err error) {
 	}
 	line = client.Scanner.Text()
 	return
+}
+
+func (client *Client) receive() {
+	for {
+		select {
+		case message := <-client.Receiver:
+			client.writeString("\r")
+			client.writeLine(message.String())
+		}
+		client.writePrompt()
+	}
 }
 
 func (client *Client) writeLine(line string) (err error) {
