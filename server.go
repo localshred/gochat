@@ -37,15 +37,7 @@ func (server *Server) acceptConnection(listener net.Listener) {
 	server.Mux.Lock()
 	defer server.Mux.Unlock()
 
-	client := &Client{
-		Channel:    newChannel("general"),
-		Conn:       conn,
-		Context:    server.Context,
-		Dispatcher: server.Dispatcher,
-		Receiver:   make(chan *Message),
-		User:       &User{"anonymous"},
-	}
-
+	client := newClient(conn, server.Context, server.Dispatcher)
 	server.Clients = append(server.Clients, client)
 	server.Context.Logger.Debugf("Connected Clients: %v", len(server.Clients))
 	go client.connected()

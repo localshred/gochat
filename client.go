@@ -40,16 +40,25 @@ type Client struct {
 	Writer     *bufio.Writer
 }
 
+func newClient(conn net.Conn, context *Context, dispatcher chan *Message) *Client {
+	scanner := bufio.NewScanner(conn)
+	scanner.Split(bufio.ScanLines)
+	return &Client{
+		Channel:    newChannel("general"),
+		Conn:       conn,
+		Context:    context,
+		Dispatcher: dispatcher,
+		Receiver:   make(chan *Message),
+		Scanner:    scanner,
+		User:       &User{"anonymous"},
+		Writer:     bufio.NewWriter(conn),
+	}
+}
+
 func (client *Client) connected() {
 	client.Context.Logger.Debugf("Client connected from %s", client.Conn.RemoteAddr())
-	client.Writer = bufio.NewWriter(client.Conn)
-	client.Scanner = bufio.NewScanner(client.Conn)
-	client.Scanner.Split(bufio.ScanLines)
-
 	client.writeString(welcomeMessage)
-
 	client.login()
-
 	go client.listen()
 	go client.receive()
 }
@@ -97,14 +106,7 @@ func (client *Client) login() {
 		client.User.Username = getWord(username, 0)
 	}
 
-	if channel, err := client.prompt("Channel: "); nil != err {
-		panic(err)
-	} else {
-		client.Channel.Name = getWord(channel, 0)
-		client.Context.Logger.Debugf("User %s signed into channel %s", client.User, client.Channel)
-	}
-
-	client.dispatchMessage(fmt.Sprintf("/join %s %s", client.Channel.Name, client.User.Username))
+	client.dispatchMessage(fmt.Sprintf("/join %s", client.Channel.Name))
 }
 
 func (client *Client) prompt(question string) (line string, err error) {
