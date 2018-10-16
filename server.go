@@ -53,7 +53,7 @@ func (server *Server) commandJoin(channelName string, message *Message) {
 
 		for _, client := range server.Clients {
 			if client.Channel == channelToLeave {
-				client.Channel = channelToJoin
+				client.joinChannel(channelToJoin)
 			}
 		}
 	}
@@ -63,6 +63,7 @@ func (server *Server) commandJoin(channelName string, message *Message) {
 }
 
 func (server *Server) findOrCreateChannel(channelName string) *Channel {
+	// TODO mutex?
 	channel, ok := server.Channels[channelName]
 	if !ok {
 		channel = newChannel(channelName)

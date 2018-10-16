@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -34,6 +35,7 @@ type Client struct {
 	Conn       net.Conn
 	Context    *Context
 	Dispatcher chan *Message
+	Mux        *sync.Mutex
 	Receiver   chan *Message
 	Scanner    *bufio.Scanner
 	User       *User
@@ -48,6 +50,7 @@ func newClient(conn net.Conn, context *Context, dispatcher chan *Message) *Clien
 		Conn:       conn,
 		Context:    context,
 		Dispatcher: dispatcher,
+		Mux:        &sync.Mutex{},
 		Receiver:   make(chan *Message),
 		Scanner:    scanner,
 		User:       &User{"anonymous"},
@@ -75,6 +78,12 @@ func (client *Client) dispatchMessage(text string) {
 func getWord(line string, index int) string {
 	words := strings.Fields(line)
 	return strings.TrimSpace(words[index])
+}
+
+func (client *Client) joinChannel(channel *Channel) {
+	client.Mux.Lock()
+	defer client.Mux.Unlock()
+	client.Channel = channel
 }
 
 func (client *Client) listen() {
