@@ -34,6 +34,8 @@ func (server *Server) acceptConnection(listener net.Listener) {
 	if nil != err {
 		printErrorAndExit(err, -1)
 	}
+	server.Mux.Lock()
+	defer server.Mux.Unlock()
 
 	client := &Client{
 		Channel:    newChannel("general"),
@@ -43,6 +45,7 @@ func (server *Server) acceptConnection(listener net.Listener) {
 		Receiver:   make(chan *Message),
 		User:       &User{"anonymous"},
 	}
+
 	server.Clients = append(server.Clients, client)
 	server.Context.Logger.Debugf("Connected Clients: %v", len(server.Clients))
 	go client.connected()
@@ -93,7 +96,8 @@ func (server *Server) receiveFromClients() {
 
 func (server *Server) sendToClients(message *Message) {
 	message.Channel.appendMessage(server.Context, message)
-	// TODO lock clients mutex
+	server.Mux.Lock()
+	defer server.Mux.Unlock()
 	for _, client := range server.Clients {
 		if client.Channel.Name == message.Channel.Name {
 			client.Receiver <- message
