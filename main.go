@@ -6,8 +6,12 @@ import (
 )
 
 func main() {
-	config := readConfig().Server
-	server := newServer(config)
+	config := readConfig()
+	server := newServer(config.Server)
+
+	httpServer := newHTTPServer(server, config.HTTPServer)
+	go httpServer.start()
+
 	server.start()
 }
 

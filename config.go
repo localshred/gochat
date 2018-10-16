@@ -8,7 +8,8 @@ import (
 var configFile = "./configs/config.json"
 
 type chatConfig struct {
-	Server *chatServerConfig `json:"server"`
+	Server     *chatServerConfig `json:"server"`
+	HTTPServer *httpServerConfig `json:"http"`
 }
 
 type chatServerConfig struct {
@@ -17,8 +18,19 @@ type chatServerConfig struct {
 	LogFile string `json:"logFile"`
 }
 
+type httpServerConfig struct {
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	LogFile string `json:"logFile"`
+}
+
 func readConfig() *chatConfig {
 	config := &chatConfig{
+		HTTPServer: &httpServerConfig{
+			Host:    "localHost",
+			LogFile: "logs/server.http.log",
+			Port:    5566,
+		},
 		Server: &chatServerConfig{
 			Host:    "localHost",
 			LogFile: "logs/server.log",
