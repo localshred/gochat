@@ -18,7 +18,7 @@ type handlerFunc func(*HTTPHandler, map[string]string, http.ResponseWriter, *htt
 var endpoints = map[string]map[string]handlerFunc{
 	"GET": map[string]handlerFunc{
 		"/channels/:channelName/messages": handleGetChannelMessages,
-		"/channels(\\?.*|$)":              handleGetChannels,
+		"/channels":                       handleGetChannels,
 	},
 }
 
@@ -79,9 +79,8 @@ func (handler *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *htt
 	method := request.Method
 	methodRouter, ok := endpoints[method]
 	if ok {
-			if matched, _ := regexp.MatchString(pattern, uri); matched {
-				n, statusCode := routeHandler(handler, response, request)
 		for routeTemplate, routeHandler := range methodRouter {
+			if matched := matchesEndpointURI(routeTemplate, uri); matched {
 				urlParams := getURLParams(routeTemplate, uri)
 				n, statusCode := routeHandler(handler, urlParams, response, request)
 				handler.Context.Logger.Debugf("%v %v %s %s", statusCode, n, method, uri)
@@ -113,6 +112,21 @@ func getURLParams(template, uri string) (params map[string]string) {
 			params[name] = value
 		}
 	}
+	return
+}
+
+func matchesEndpointURI(endpoint, uri string) (matched bool) {
+	matched = false
+	re, err := regexp.Compile("/:[^/]+")
+	if nil != err {
+		return
+	}
+	patternString := re.ReplaceAllLiteralString(regexp.QuoteMeta(endpoint), "/[^/]+")
+	re, err = regexp.Compile(patternString)
+	if nil != err {
+		return
+	}
+	matched = re.MatchString(uri)
 	return
 }
 

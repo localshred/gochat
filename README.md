@@ -13,6 +13,6 @@ Basic client-server chat program working over Telnet.
 
 ## TODO
 
+* [x] Optional: Rest API to read messages
 * [ ] Optional: Rest API to post messages
-* [ ] Optional: Rest API to read messages
 * [ ] Optional: Ignore/unsub user (e.g. don't show me user X's messages)
