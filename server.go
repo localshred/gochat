@@ -63,7 +63,8 @@ func (server *Server) commandJoin(channelName string, message *Message) {
 }
 
 func (server *Server) findOrCreateChannel(channelName string) *Channel {
-	// TODO mutex?
+	server.Mux.Lock()
+	defer server.Mux.Unlock()
 	channel, ok := server.Channels[channelName]
 	if !ok {
 		channel = newChannel(channelName)
