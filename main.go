@@ -7,8 +7,7 @@ import (
 
 func main() {
 	config := readConfig().Server
-	context := &Context{Config: config}
-	server := &Server{Context: context}
+	server := newServer(config)
 	server.start()
 }
 

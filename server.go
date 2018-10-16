@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 )
 
 // Context is a struct that can be passed to clients to get access to main server resources
@@ -18,6 +19,14 @@ type Server struct {
 	Channels   map[string]*Channel
 	Context    *Context
 	Dispatcher chan *Message
+	Mux        *sync.Mutex
+}
+
+func newServer(config *chatServerConfig) *Server {
+	return &Server{
+		Context: &Context{Config: config},
+		Mux:     &sync.Mutex{},
+	}
 }
 
 func (server *Server) acceptConnection(listener net.Listener) {
