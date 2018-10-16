@@ -14,5 +14,10 @@ type Message struct {
 }
 
 func (message *Message) String() string {
-	return fmt.Sprintf("[%s, %s] %s", message.Time, message.User.Username, message.Message)
+	return fmt.Sprintf(
+		"[%s] %s: %s",
+		message.Time.Local().Format("03:04"),
+		message.User.Username,
+		message.Message,
+	)
 }
