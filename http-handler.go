@@ -16,6 +16,7 @@ type handlerFunc func(*HTTPHandler, http.ResponseWriter, *http.Request) (n int, 
 
 var endpoints = map[string]map[string]handlerFunc{
 	"GET": map[string]handlerFunc{
+		"/channels/:channelName/messages": handleGetChannelMessages,
 		"/channels(\\?.*|$)":              handleGetChannels,
 	},
 }
@@ -23,6 +24,29 @@ var endpoints = map[string]map[string]handlerFunc{
 // ChannelsJSON represents a list of channel names to be responded as JSON
 type ChannelsJSON struct {
 	Channels []string `json:"channels"`
+}
+
+// ChannelMessagesJSON represents a list of channel messages to be responded as JSON
+type ChannelMessagesJSON struct {
+	Messages []*Message `json:"messages"`
+}
+
+func handleGetChannelMessages(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	channelName := "general"
+	channel := (*handler.Channels)[channelName]
+	payload := &ChannelMessagesJSON{
+		Messages: channel.Messages,
+	}
+
+	contentType := "application/json"
+	statusCode = 200
+	bytes, err := json.Marshal(payload)
+	if nil != err {
+		contentType = "text/plain"
+		statusCode = 404
+		bytes = []byte(err.Error())
+	}
+	return writeResponse(response, statusCode, contentType, bytes)
 }
 
 func handleGetChannels(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
