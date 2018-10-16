@@ -8,10 +8,10 @@ import (
 
 // Channel holds properties related to channels
 type Channel struct {
-	Name     string
-	Messages []*Message
-	Mux      *sync.Mutex
-	Users    map[string]*User
+	Name     string           `json:"name"`
+	Messages []*Message       `json:"messages"`
+	Mux      *sync.Mutex      `json:"-"`
+	Users    map[string]*User `json:"users"`
 }
 
 func listChannels(channels map[string]*Channel) []string {

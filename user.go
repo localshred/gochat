@@ -4,7 +4,7 @@ import "fmt"
 
 // User holds user properties
 type User struct {
-	Username string
+	Username string `json:"username"`
 }
 
 var botUser = &User{

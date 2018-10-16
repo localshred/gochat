@@ -7,10 +7,10 @@ import (
 
 // Message holds a reference to the channel and the user who posted the message
 type Message struct {
-	Channel *Channel
-	Message string
-	Time    time.Time
-	User    *User
+	Channel *Channel  `json:"-"`
+	Message string    `json:"message"`
+	Time    time.Time `json:"time"`
+	User    *User     `json:"user"`
 }
 
 func botMessage(channel *Channel, message string) *Message {
