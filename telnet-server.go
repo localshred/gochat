@@ -80,6 +80,26 @@ func (telnetServer *TelnetServer) receiveFromClients() {
 		case message := <-telnetServer.Dispatcher:
 			fields := strings.Fields(message.Message)
 			switch fields[0] {
+			case "/join":
+				{
+					channelName := fields[1]
+					channelToJoin := telnetServer.findOrCreateChannel(channelName)
+
+					if channelName != message.Channel.Name {
+						channelToLeave := message.Channel
+						leaveMessage := channelToLeave.userLeft(message.User)
+						telnetServer.sendToClients(leaveMessage)
+
+						for _, client := range telnetServer.Clients {
+							if client.Channel == channelToLeave {
+								client.Channel = channelToJoin
+							}
+						}
+					}
+
+					joinMessage := channelToJoin.userJoined(message.User)
+					telnetServer.sendToClients(joinMessage)
+				}
 			default:
 				telnetServer.sendToClients(message)
 			}

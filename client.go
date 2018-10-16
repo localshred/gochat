@@ -110,7 +110,12 @@ func (client *Client) login() {
 		client.Context.Logger.Debugf("User %s signed into channel %s", client.User, client.Channel)
 	}
 
-	client.writeLine(fmt.Sprintf("%s joined %s along with %v other users\n", client.User, client.Channel, 3))
+	client.Dispatcher <- &Message{
+		Channel: client.Channel,
+		Message: fmt.Sprintf("/join %s %s", client.Channel.Name, client.User.Username),
+		Time:    time.Now().UTC(),
+		User:    client.User,
+	}
 }
 
 func getWord(line string, index int) string {
