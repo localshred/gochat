@@ -19,6 +19,11 @@ func newChannel(name string) *Channel {
 	}
 }
 
+func (channel *Channel) userLeft(user *User) *Message {
+	delete(channel.Users, user.Username)
+	return botMessage(channel, fmt.Sprintf("%s left %s", user, channel))
+}
+
 func (channel *Channel) appendMessage(context *Context, message *Message) {
 	// TODO lock mutex
 	channel.Messages = append(channel.Messages, message)
@@ -28,11 +33,6 @@ func (channel *Channel) appendMessage(context *Context, message *Message) {
 func (channel *Channel) userJoined(user *User) *Message {
 	channel.Users[user.Username] = user
 	return botMessage(channel, fmt.Sprintf("%s joined %s", user, channel))
-}
-
-func (channel *Channel) userLeft(user *User) *Message {
-	delete(channel.Users, user.Username)
-	return botMessage(channel, fmt.Sprintf("%s left %s", user, channel))
 }
 
 func (channel *Channel) String() string {

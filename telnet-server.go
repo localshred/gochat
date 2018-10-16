@@ -20,6 +20,78 @@ type TelnetServer struct {
 	Dispatcher chan *Message
 }
 
+func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
+	conn, err := listener.Accept()
+	if nil != err {
+		printErrorAndExit(err, -1)
+	}
+
+	client := &Client{
+		Channel:    newChannel("general"),
+		Conn:       conn,
+		Context:    telnetServer.Context,
+		Dispatcher: telnetServer.Dispatcher,
+		Receiver:   make(chan *Message),
+		User:       &User{"anonymous"},
+	}
+	telnetServer.Clients = append(telnetServer.Clients, client)
+	telnetServer.Context.Logger.Debugf("Connected Clients: %v", len(telnetServer.Clients))
+	go client.connected()
+}
+
+func (telnetServer *TelnetServer) commandJoin(channelName string, message *Message) {
+	channelToJoin := telnetServer.findOrCreateChannel(channelName)
+
+	if channelName != message.Channel.Name {
+		channelToLeave := message.Channel
+		leaveMessage := channelToLeave.userLeft(message.User)
+		telnetServer.sendToClients(leaveMessage)
+
+		for _, client := range telnetServer.Clients {
+			if client.Channel == channelToLeave {
+				client.Channel = channelToJoin
+			}
+		}
+	}
+
+	joinMessage := channelToJoin.userJoined(message.User)
+	telnetServer.sendToClients(joinMessage)
+}
+
+func (telnetServer *TelnetServer) findOrCreateChannel(channelName string) *Channel {
+	channel, ok := telnetServer.Channels[channelName]
+	if !ok {
+		channel = newChannel(channelName)
+		telnetServer.Channels[channelName] = channel
+	}
+	return channel
+}
+
+func (telnetServer *TelnetServer) receiveFromClients() {
+	for {
+		select {
+		case message := <-telnetServer.Dispatcher:
+			fields := strings.Fields(message.Message)
+			switch fields[0] {
+			case "/join":
+				telnetServer.commandJoin(fields[1], message)
+			default:
+				telnetServer.sendToClients(message)
+			}
+		}
+	}
+}
+
+func (telnetServer *TelnetServer) sendToClients(message *Message) {
+	message.Channel.appendMessage(telnetServer.Context, message)
+	// TODO lock clients mutex
+	for _, client := range telnetServer.Clients {
+		if client.Channel.Name == message.Channel.Name {
+			client.Receiver <- message
+		}
+	}
+}
+
 func (telnetServer *TelnetServer) start() {
 	context := telnetServer.Context
 	config := context.Config
@@ -49,76 +121,4 @@ func (telnetServer *TelnetServer) start() {
 	for {
 		telnetServer.acceptConnection(listener)
 	}
-}
-
-func (telnetServer *TelnetServer) findOrCreateChannel(channelName string) *Channel {
-	channel, ok := telnetServer.Channels[channelName]
-	if !ok {
-		channel = newChannel(channelName)
-		telnetServer.Channels[channelName] = channel
-	}
-	return channel
-}
-
-func (telnetServer *TelnetServer) receiveFromClients() {
-	for {
-		select {
-		case message := <-telnetServer.Dispatcher:
-			fields := strings.Fields(message.Message)
-			switch fields[0] {
-			case "/join":
-				telnetServer.commandJoin(fields[1], message)
-			default:
-				telnetServer.sendToClients(message)
-			}
-		}
-	}
-}
-
-func (telnetServer *TelnetServer) commandJoin(channelName string, message *Message) {
-	channelToJoin := telnetServer.findOrCreateChannel(channelName)
-
-	if channelName != message.Channel.Name {
-		channelToLeave := message.Channel
-		leaveMessage := channelToLeave.userLeft(message.User)
-		telnetServer.sendToClients(leaveMessage)
-
-		for _, client := range telnetServer.Clients {
-			if client.Channel == channelToLeave {
-				client.Channel = channelToJoin
-			}
-		}
-	}
-
-	joinMessage := channelToJoin.userJoined(message.User)
-	telnetServer.sendToClients(joinMessage)
-}
-
-func (telnetServer *TelnetServer) sendToClients(message *Message) {
-	message.Channel.appendMessage(telnetServer.Context, message)
-	// TODO lock clients mutex
-	for _, client := range telnetServer.Clients {
-		if client.Channel.Name == message.Channel.Name {
-			client.Receiver <- message
-		}
-	}
-}
-
-func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
-	conn, err := listener.Accept()
-	if nil != err {
-		printErrorAndExit(err, -1)
-	}
-
-	client := &Client{
-		Channel:    newChannel("general"),
-		Conn:       conn,
-		Context:    telnetServer.Context,
-		Dispatcher: telnetServer.Dispatcher,
-		Receiver:   make(chan *Message),
-		User:       &User{"anonymous"},
-	}
-	telnetServer.Clients = append(telnetServer.Clients, client)
-	telnetServer.Context.Logger.Debugf("Connected Clients: %v", len(telnetServer.Clients))
-	go client.connected()
 }
