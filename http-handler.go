@@ -14,19 +14,18 @@ type HTTPHandler struct {
 
 type handlerFunc func(*HTTPHandler, http.ResponseWriter, *http.Request) (n int, statusCode int)
 
-func writeResponse(response http.ResponseWriter, statusCode int, contentType string, bytes []byte) (int, int) {
-	n := len(bytes)
-	response.Header().Set("Content-Type", contentType)
-	response.WriteHeader(statusCode)
-	response.Write(bytes)
-	return n, statusCode
+var endpoints = map[string]map[string]handlerFunc{
+	"GET": map[string]handlerFunc{
+		"/channels(\\?.*|$)":              handleGetChannels,
+	},
 }
 
-func routeNotFound(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
-	return writeResponse(response, 404, "text/plain", []byte("Not Found"))
+// ChannelsJSON represents a list of channel names to be responded as JSON
+type ChannelsJSON struct {
+	Channels []string `json:"channels"`
 }
 
-func getChannels(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+func handleGetChannels(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
 	channels := listChannels(*handler.Channels)
 	payload := map[string][]string{
 		"channels": channels,
@@ -43,10 +42,8 @@ func getChannels(handler *HTTPHandler, response http.ResponseWriter, request *ht
 	return writeResponse(response, statusCode, contentType, bytes)
 }
 
-var endpoints = map[string]map[string]handlerFunc{
-	"GET": map[string]handlerFunc{
-		"/channels(\\?.*|$)": getChannels,
-	},
+func handleNotFound(handler *HTTPHandler, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	return writeResponse(response, 404, "text/plain", []byte("Not Found"))
 }
 
 func (handler *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
@@ -63,6 +60,14 @@ func (handler *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *htt
 		}
 	}
 
-	n, statusCode := routeNotFound(handler, response, request)
+	n, statusCode := handleNotFound(handler, response, request)
 	handler.Context.Logger.Warnf("%v %v %s %s", statusCode, n, method, uri)
+}
+
+func writeResponse(response http.ResponseWriter, statusCode int, contentType string, bytes []byte) (int, int) {
+	n := len(bytes)
+	response.Header().Set("Content-Type", contentType)
+	response.WriteHeader(statusCode)
+	response.Write(bytes)
+	return n, statusCode
 }
