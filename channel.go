@@ -23,6 +23,8 @@ func newChannel(name string) *Channel {
 }
 
 func (channel *Channel) userLeft(user *User) *Message {
+	channel.Mux.Lock()
+	defer channel.Mux.Unlock()
 	delete(channel.Users, user.Username)
 	return botMessage(channel, fmt.Sprintf("%s left %s", user, channel))
 }
@@ -35,6 +37,8 @@ func (channel *Channel) appendMessage(context *Context, message *Message) {
 }
 
 func (channel *Channel) userJoined(user *User) *Message {
+	channel.Mux.Lock()
+	defer channel.Mux.Unlock()
 	channel.Users[user.Username] = user
 	return botMessage(channel, fmt.Sprintf("%s joined %s", user, channel))
 }
