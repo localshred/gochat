@@ -42,13 +42,13 @@ func (logger *telnetLogger) Warnf(format string, v ...interface{}) {
 	logger.logger.Print("[WARN] ", fmt.Sprintf(format, v...))
 }
 
-func createLogger(logFileName string) (*telnetLogger, *os.File, error) {
+func createLogger(prefix string, logFileName string) (*telnetLogger, *os.File, error) {
 	logFile, err := getLogFile(logFileName)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	logger := log.New(logFile, "server - ", log.Ldate|log.Ltime|log.LUTC)
+	logger := log.New(logFile, prefix, log.Ldate|log.Ltime|log.LUTC)
 	return &telnetLogger{logger}, logFile, nil
 }
 

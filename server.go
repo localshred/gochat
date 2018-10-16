@@ -24,8 +24,9 @@ type Server struct {
 
 func newServer(config *chatServerConfig) *Server {
 	return &Server{
-		Context: &Context{Config: config},
-		Mux:     &sync.Mutex{},
+		Channels: map[string]*Channel{},
+		Context:  &Context{Config: config},
+		Mux:      &sync.Mutex{},
 	}
 }
 
@@ -103,7 +104,7 @@ func (server *Server) start() {
 	context := server.Context
 	config := context.Config
 	address := fmt.Sprintf("%s:%v", config.Host, config.Port)
-	logger, logFile, err := createLogger(config.LogFile)
+	logger, logFile, err := createLogger("server - ", config.LogFile)
 	if err != nil {
 		printErrorAndExit(err, -1)
 	}
@@ -116,7 +117,7 @@ func (server *Server) start() {
 	}
 	defer listener.Close()
 
-	listeningMessage := fmt.Sprintf("Server listening on %s\n", address)
+	listeningMessage := fmt.Sprintf("TCP Server listening on %s\n", address)
 	fmt.Print(listeningMessage)
 	context.Logger.Debug(listeningMessage)
 
