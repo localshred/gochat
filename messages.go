@@ -13,6 +13,15 @@ type Message struct {
 	User    *User
 }
 
+func botMessage(channel *Channel, message string) *Message {
+	return &Message{
+		Channel: channel,
+		Message: message,
+		Time:    time.Now().UTC(),
+		User:    botUser,
+	}
+}
+
 func (message *Message) String() string {
 	return fmt.Sprintf(
 		"[%s] %s: %s",

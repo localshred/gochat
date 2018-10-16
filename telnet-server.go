@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"time"
 )
 
 // Context is a struct that can be passed to clients to get access to main server resources
@@ -54,15 +53,6 @@ func (telnetServer *TelnetServer) start() {
 
 var botUser = &User{
 	Username: "bot",
-}
-
-func botMessage(channel *Channel, message string) *Message {
-	return &Message{
-		Channel: channel,
-		Message: message,
-		Time:    time.Now().UTC(),
-		User:    botUser,
-	}
 }
 
 func (telnetServer *TelnetServer) findOrCreateChannel(channelName string) *Channel {
