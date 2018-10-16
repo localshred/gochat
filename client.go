@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 var (
@@ -29,12 +30,13 @@ Type /exit<return> to leave chat.
 // Client contains the client connection and the channel for dispatching
 // messages back to the server for storage and dispatch to other connected clients
 type Client struct {
-	Channel *Channel
-	Conn    net.Conn
-	Context *Context
-	Scanner *bufio.Scanner
-	User    *User
-	Writer  *bufio.Writer
+	Channel    *Channel
+	Conn       net.Conn
+	Context    *Context
+	Dispatcher chan *Message
+	Scanner    *bufio.Scanner
+	User       *User
+	Writer     *bufio.Writer
 }
 
 func (client *Client) connected() {
@@ -46,7 +48,9 @@ func (client *Client) connected() {
 	client.writeString(welcomeMessage)
 
 	client.login()
-	client.listen()
+
+	go client.listen()
+	go client.receive()
 }
 
 func (client *Client) listen() {
@@ -65,8 +69,24 @@ func (client *Client) listen() {
 	}
 }
 
-func (client *Client) dispatchMessage(channelMessage string) {
-	client.Channel.appendMessage(client.Context, channelMessage, client.User)
+func (client *Client) receive() {
+	for {
+		select {
+		case message := <-client.Receiver:
+			client.writeString("\r")
+			client.writeLine(message.String())
+		}
+		client.writePrompt()
+	}
+}
+
+func (client *Client) dispatchMessage(text string) {
+	client.Dispatcher <- &Message{
+		Channel: client.Channel,
+		Message: text,
+		Time:    time.Now().UTC(),
+		User:    client.User,
+	}
 }
 
 func (client *Client) login() {
@@ -115,6 +135,7 @@ func (client *Client) writeLine(line string) (err error) {
 }
 
 func (client *Client) writePrompt() {
+	client.writeString("$ ")
 }
 
 func (client *Client) writeString(line string) (err error) {

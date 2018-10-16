@@ -13,9 +13,10 @@ type Context struct {
 
 // TelnetServer represents a wrapped telnet server
 type TelnetServer struct {
-	Clients  []*Client
-	Context  *Context
+	Clients    []*Client
 	Channels   map[string]*Channel
+	Context    *Context
+	Dispatcher chan *Message
 }
 
 func (telnetServer *TelnetServer) start() {
@@ -41,6 +42,9 @@ func (telnetServer *TelnetServer) start() {
 
 	telnetServer.Channels = map[string]*Channel{}
 	telnetServer.findOrCreateChannel("general")
+
+	telnetServer.Dispatcher = make(chan *Message)
+	go telnetServer.receiveFromClients()
 	for {
 		telnetServer.acceptConnection(listener)
 	}
@@ -68,6 +72,23 @@ func (telnetServer *TelnetServer) findOrCreateChannel(channelName string) *Chann
 	return channel
 }
 
+func (telnetServer *TelnetServer) receiveFromClients() {
+	for {
+		select {
+		case message := <-telnetServer.Dispatcher:
+				telnetServer.sendToClients(message)
+		}
+	}
+}
+
+func (telnetServer *TelnetServer) sendToClients(message *Message) {
+	telnetServer.Context.Logger.Debug(message)
+	// TODO lock clients mutex
+	for _, client := range telnetServer.Clients {
+			client.Receiver <- message
+	}
+}
+
 func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
 	conn, err := listener.Accept()
 	if nil != err {
@@ -75,10 +96,11 @@ func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
 	}
 
 	client := &Client{
-		Conn:    conn,
-		Context: telnetServer.Context,
-		User:    &User{"anonymous"},
 		Channel:    newChannel("general"),
+		Conn:       conn,
+		Context:    telnetServer.Context,
+		Dispatcher: telnetServer.Dispatcher,
+		User:       &User{"anonymous"},
 	}
 	telnetServer.Clients = append(telnetServer.Clients, client)
 	telnetServer.Context.Logger.Debugf("Connected Clients: %v", len(telnetServer.Clients))
