@@ -17,8 +17,8 @@ type handlerFunc func(*HTTPHandler, http.ResponseWriter, *http.Request) (n int, 
 func writeResponse(response http.ResponseWriter, statusCode int, contentType string, bytes []byte) (int, int) {
 	n := len(bytes)
 	response.Header().Set("Content-Type", contentType)
-	response.Write(bytes)
 	response.WriteHeader(statusCode)
+	response.Write(bytes)
 	return n, statusCode
 }
 
@@ -45,7 +45,7 @@ func getChannels(handler *HTTPHandler, response http.ResponseWriter, request *ht
 
 var endpoints = map[string]map[string]handlerFunc{
 	"GET": map[string]handlerFunc{
-		"/channels.*": getChannels,
+		"/channels(\\?.*|$)": getChannels,
 	},
 }
 

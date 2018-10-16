@@ -17,7 +17,6 @@ type Channel struct {
 func listChannels(channels map[string]*Channel) []string {
 	list := []string{}
 	for channelName := range channels {
-		fmt.Println("channelName", channelName)
 		list = append(list, channelName)
 	}
 	sort.Strings(list)
