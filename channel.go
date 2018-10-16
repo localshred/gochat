@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"sync"
 )
 
 // Channel holds properties related to channels
 type Channel struct {
 	Name     string
 	Messages []*Message
+	Mux      *sync.Mutex
 	Users    map[string]*User
 }
 
@@ -15,6 +17,7 @@ func newChannel(name string) *Channel {
 	return &Channel{
 		Name:     name,
 		Messages: []*Message{},
+		Mux:      &sync.Mutex{},
 		Users:    map[string]*User{},
 	}
 }
@@ -25,7 +28,8 @@ func (channel *Channel) userLeft(user *User) *Message {
 }
 
 func (channel *Channel) appendMessage(context *Context, message *Message) {
-	// TODO lock mutex
+	channel.Mux.Lock()
+	defer channel.Mux.Unlock()
 	channel.Messages = append(channel.Messages, message)
 	context.Logger.Debugf("[%s] %s", channel, message)
 }

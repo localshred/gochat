@@ -8,7 +8,7 @@ type User struct {
 }
 
 var botUser = &User{
-	Username: "bot",
+	Username: "gochatbot",
 }
 
 func (user *User) String() string {
