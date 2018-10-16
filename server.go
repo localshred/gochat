@@ -90,7 +90,8 @@ func (server *Server) receiveFromClients() {
 }
 
 func (server *Server) sendToClients(message *Message) {
-	message.Channel.appendMessage(server.Context, message)
+	channel := server.findOrCreateChannel(message.Channel.Name)
+	channel.appendMessage(server.Context, message)
 	server.Mux.Lock()
 	defer server.Mux.Unlock()
 	for _, client := range server.Clients {
