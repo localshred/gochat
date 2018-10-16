@@ -6,13 +6,10 @@ import (
 )
 
 func main() {
-	config := readConfig()
-	telnetServer := &TelnetServer{
-		Context: &Context{
-			Config: config.Server,
-		},
-	}
-	telnetServer.start()
+	config := readConfig().Server
+	context := &Context{Config: config}
+	server := &Server{Context: context}
+	server.start()
 }
 
 func printErrorAndExit(err error, exitCode int) {

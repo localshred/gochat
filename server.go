@@ -12,15 +12,15 @@ type Context struct {
 	Logger *telnetLogger
 }
 
-// TelnetServer represents a wrapped telnet server
-type TelnetServer struct {
+// Server represents a wrapped telnet server
+type Server struct {
 	Clients    []*Client
 	Channels   map[string]*Channel
 	Context    *Context
 	Dispatcher chan *Message
 }
 
-func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
+func (server *Server) acceptConnection(listener net.Listener) {
 	conn, err := listener.Accept()
 	if nil != err {
 		printErrorAndExit(err, -1)
@@ -29,25 +29,25 @@ func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
 	client := &Client{
 		Channel:    newChannel("general"),
 		Conn:       conn,
-		Context:    telnetServer.Context,
-		Dispatcher: telnetServer.Dispatcher,
+		Context:    server.Context,
+		Dispatcher: server.Dispatcher,
 		Receiver:   make(chan *Message),
 		User:       &User{"anonymous"},
 	}
-	telnetServer.Clients = append(telnetServer.Clients, client)
-	telnetServer.Context.Logger.Debugf("Connected Clients: %v", len(telnetServer.Clients))
+	server.Clients = append(server.Clients, client)
+	server.Context.Logger.Debugf("Connected Clients: %v", len(server.Clients))
 	go client.connected()
 }
 
-func (telnetServer *TelnetServer) commandJoin(channelName string, message *Message) {
-	channelToJoin := telnetServer.findOrCreateChannel(channelName)
+func (server *Server) commandJoin(channelName string, message *Message) {
+	channelToJoin := server.findOrCreateChannel(channelName)
 
 	if channelName != message.Channel.Name {
 		channelToLeave := message.Channel
 		leaveMessage := channelToLeave.userLeft(message.User)
-		telnetServer.sendToClients(leaveMessage)
+		server.sendToClients(leaveMessage)
 
-		for _, client := range telnetServer.Clients {
+		for _, client := range server.Clients {
 			if client.Channel == channelToLeave {
 				client.Channel = channelToJoin
 			}
@@ -55,45 +55,45 @@ func (telnetServer *TelnetServer) commandJoin(channelName string, message *Messa
 	}
 
 	joinMessage := channelToJoin.userJoined(message.User)
-	telnetServer.sendToClients(joinMessage)
+	server.sendToClients(joinMessage)
 }
 
-func (telnetServer *TelnetServer) findOrCreateChannel(channelName string) *Channel {
-	channel, ok := telnetServer.Channels[channelName]
+func (server *Server) findOrCreateChannel(channelName string) *Channel {
+	channel, ok := server.Channels[channelName]
 	if !ok {
 		channel = newChannel(channelName)
-		telnetServer.Channels[channelName] = channel
+		server.Channels[channelName] = channel
 	}
 	return channel
 }
 
-func (telnetServer *TelnetServer) receiveFromClients() {
+func (server *Server) receiveFromClients() {
 	for {
 		select {
-		case message := <-telnetServer.Dispatcher:
+		case message := <-server.Dispatcher:
 			fields := strings.Fields(message.Message)
 			switch fields[0] {
 			case "/join":
-				telnetServer.commandJoin(fields[1], message)
+				server.commandJoin(fields[1], message)
 			default:
-				telnetServer.sendToClients(message)
+				server.sendToClients(message)
 			}
 		}
 	}
 }
 
-func (telnetServer *TelnetServer) sendToClients(message *Message) {
-	message.Channel.appendMessage(telnetServer.Context, message)
+func (server *Server) sendToClients(message *Message) {
+	message.Channel.appendMessage(server.Context, message)
 	// TODO lock clients mutex
-	for _, client := range telnetServer.Clients {
+	for _, client := range server.Clients {
 		if client.Channel.Name == message.Channel.Name {
 			client.Receiver <- message
 		}
 	}
 }
 
-func (telnetServer *TelnetServer) start() {
-	context := telnetServer.Context
+func (server *Server) start() {
+	context := server.Context
 	config := context.Config
 	address := fmt.Sprintf("%s:%v", config.Host, config.Port)
 	logger, logFile, err := createLogger(config.LogFile)
@@ -113,12 +113,12 @@ func (telnetServer *TelnetServer) start() {
 	fmt.Print(listeningMessage)
 	context.Logger.Debug(listeningMessage)
 
-	telnetServer.Channels = map[string]*Channel{}
-	telnetServer.findOrCreateChannel("general")
+	server.Channels = map[string]*Channel{}
+	server.findOrCreateChannel("general")
 
-	telnetServer.Dispatcher = make(chan *Message)
-	go telnetServer.receiveFromClients()
+	server.Dispatcher = make(chan *Message)
+	go server.receiveFromClients()
 	for {
-		telnetServer.acceptConnection(listener)
+		server.acceptConnection(listener)
 	}
 }
