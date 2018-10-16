@@ -51,10 +51,6 @@ func (telnetServer *TelnetServer) start() {
 	}
 }
 
-var botUser = &User{
-	Username: "bot",
-}
-
 func (telnetServer *TelnetServer) findOrCreateChannel(channelName string) *Channel {
 	channel, ok := telnetServer.Channels[channelName]
 	if !ok {
