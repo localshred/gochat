@@ -13,6 +13,12 @@ type Channel struct {
 // Messages are stored as a slice in a map keyed by the channel name
 var channelsMessages = map[*Channel][]*Message{}
 
+func newChannel(name string) *Channel {
+	return &Channel{
+		Name:  name,
+	}
+}
+
 // TODO lock mutex
 func (channel *Channel) appendMessage(context *Context, message string, user *User) (msg *Message) {
 	msg = &Message{
