@@ -95,7 +95,7 @@ func (telnetServer *TelnetServer) commandJoin(channelName string, message *Messa
 }
 
 func (telnetServer *TelnetServer) sendToClients(message *Message) {
-	telnetServer.Context.Logger.Debug(message)
+	message.Channel.appendMessage(telnetServer.Context, message)
 	// TODO lock clients mutex
 	for _, client := range telnetServer.Clients {
 		if client.Channel.Name == message.Channel.Name {
