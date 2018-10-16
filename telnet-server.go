@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
+	"time"
 )
 
 // Context is a struct that can be passed to clients to get access to main server resources
@@ -76,7 +78,11 @@ func (telnetServer *TelnetServer) receiveFromClients() {
 	for {
 		select {
 		case message := <-telnetServer.Dispatcher:
+			fields := strings.Fields(message.Message)
+			switch fields[0] {
+			default:
 				telnetServer.sendToClients(message)
+			}
 		}
 	}
 }
@@ -85,7 +91,9 @@ func (telnetServer *TelnetServer) sendToClients(message *Message) {
 	telnetServer.Context.Logger.Debug(message)
 	// TODO lock clients mutex
 	for _, client := range telnetServer.Clients {
+		if client.Channel.Name == message.Channel.Name {
 			client.Receiver <- message
+		}
 	}
 }
 
@@ -100,6 +108,7 @@ func (telnetServer *TelnetServer) acceptConnection(listener net.Listener) {
 		Conn:       conn,
 		Context:    telnetServer.Context,
 		Dispatcher: telnetServer.Dispatcher,
+		Receiver:   make(chan *Message),
 		User:       &User{"anonymous"},
 	}
 	telnetServer.Clients = append(telnetServer.Clients, client)

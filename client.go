@@ -34,6 +34,7 @@ type Client struct {
 	Conn       net.Conn
 	Context    *Context
 	Dispatcher chan *Message
+	Receiver   chan *Message
 	Scanner    *bufio.Scanner
 	User       *User
 	Writer     *bufio.Writer
