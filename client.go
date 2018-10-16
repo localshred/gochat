@@ -115,7 +115,6 @@ func (client *Client) writeLine(line string) (err error) {
 }
 
 func (client *Client) writePrompt() {
-	client.writeString(fmt.Sprintf("%s: ", client.User.Username))
 }
 
 func (client *Client) writeString(line string) (err error) {
