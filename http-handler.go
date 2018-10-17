@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -20,6 +23,9 @@ var endpoints = map[string]map[string]handlerFunc{
 		"/channels/:channelName/messages": handleGetChannelMessages,
 		"/channels":                       handleGetChannels,
 	},
+	"POST": map[string]handlerFunc{
+		"/channels/:channelName/messages": handlePostChannelMessage,
+	},
 }
 
 // ChannelsJSON represents a list of channel names to be responded as JSON
@@ -30,6 +36,17 @@ type ChannelsJSON struct {
 // ChannelMessagesJSON represents a list of channel messages to be responded as JSON
 type ChannelMessagesJSON struct {
 	Messages []*Message `json:"messages"`
+}
+
+// PostMessageRequestJSON represents the POST body as a JSON document when creating a message on a channel
+type PostMessageRequestJSON struct {
+	Username string `json:"username"`
+	Message  string `json:"message"`
+}
+
+// PostMessageResponseJSON represents the JSON response when creating a message on a channel
+type PostMessageResponseJSON struct {
+	Message *Message `json:"message"`
 }
 
 func getURLParams(template, uri string) (params map[string]string) {
@@ -79,8 +96,29 @@ func handleGetChannels(handler *HTTPHandler, urlParams map[string]string, respon
 
 	return writeJSONResponse(response, 200, payload)
 }
+
+func handlePostChannelMessage(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	channelName, ok := urlParams["channelName"]
+	if !ok {
+		channelName = "general"
 	}
-	return writeResponse(response, statusCode, contentType, bytes)
+	data := &PostMessageRequestJSON{}
+	parseJSONBody(request.Body, data)
+
+	channel := (*handler.Channels)[channelName]
+	message := &Message{
+		Channel: channel,
+		Message: data.Message,
+		User: &User{
+			Username: data.Username,
+		},
+	}
+	// TODO dispatch message back to server for append
+	payload := &PostMessageResponseJSON{
+		Message: message,
+	}
+
+	return writeJSONResponse(response, 200, payload)
 }
 
 func handleNotFound(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
@@ -100,6 +138,19 @@ func matchesEndpointURI(endpoint, uri string) (matched bool) {
 	}
 	matched = re.MatchString(uri)
 	return
+}
+
+func parseJSONBody(body io.Reader, into interface{}) error {
+	scanner := bufio.NewScanner(body)
+	scanner.Split(bufio.ScanLines)
+	data := []byte{}
+	for scanner.Scan() {
+		data = append(data, scanner.Bytes()...)
+	}
+	if err := json.Unmarshal(data, into); nil != err {
+		return err
+	}
+	return nil
 }
 
 func (handler *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
