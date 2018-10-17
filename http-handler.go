@@ -57,9 +57,13 @@ func getURLParams(template, uri string) (params map[string]string) {
 func handleGetChannelMessages(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
 	channelName, ok := urlParams["channelName"]
 	if !ok {
-		channelName = "general"
+		return writeResponse(response, 404, "text/plain", []byte("Not Found"))
 	}
-	channel := (*handler.Channels)[channelName]
+
+	channel, ok := (*handler.Channels)[channelName]
+	if !ok {
+		return writeResponse(response, 404, "text/plain", []byte("Not Found"))
+	}
 	payload := &ChannelMessagesJSON{
 		Messages: channel.Messages,
 	}
