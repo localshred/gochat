@@ -30,8 +30,9 @@ func (httpServer *HTTPServer) start() {
 
 	address := fmt.Sprintf("%s:%v", httpServer.Config.Host, httpServer.Config.Port)
 	handler := &HTTPHandler{
-		Channels: &httpServer.Server.Channels,
-		Context:  context,
+		Channels:   &httpServer.Server.Channels,
+		Context:    context,
+		Dispatcher: &httpServer.Server.Dispatcher,
 	}
 	server := &http.Server{
 		Addr:    address,

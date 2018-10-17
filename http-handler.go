@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // HTTPHandler a type for responding to HTTP requests
 type HTTPHandler struct {
-	Channels *map[string]*Channel
-	Context  *Context
+	Channels   *map[string]*Channel
+	Context    *Context
+	Dispatcher *chan *Message
 }
 
 type handlerFunc func(*HTTPHandler, map[string]string, http.ResponseWriter, *http.Request) (n int, statusCode int)
@@ -109,15 +111,12 @@ func handlePostChannelMessage(handler *HTTPHandler, urlParams map[string]string,
 	message := &Message{
 		Channel: channel,
 		Message: data.Message,
-		User: &User{
-			Username: data.Username,
-		},
+		Time:    time.Now().UTC(),
+		User:    &User{Username: data.Username},
 	}
-	// TODO dispatch message back to server for append
-	payload := &PostMessageResponseJSON{
-		Message: message,
-	}
+	*handler.Dispatcher <- message
 
+	payload := &PostMessageResponseJSON{Message: message}
 	return writeJSONResponse(response, 200, payload)
 }
 
