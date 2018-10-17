@@ -1,8 +1,16 @@
 # gochat
 
-Basic client-server chat program working over Telnet.
+Basic client-server chat program working over Telnet and HTTP.
 
-## Done
+#### Multi-client chat over TCP with channel support
+
+![](gochat-telnet-demo.gif)
+
+#### HTTP support for getting channel list, channel messages, and posting a message to a channel
+
+![](gochat-http-demo.gif)
+
+## Features
 
 * [x] Chat Server
 * [x] Config settings read from local config file (port, ip, log file)
