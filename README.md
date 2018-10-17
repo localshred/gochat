@@ -10,9 +10,5 @@ Basic client-server chat program working over Telnet.
 * [x] All messages logged locally
 * [x] Optional: Support rooms/channels
 * [x] Relay new messages to all clients with timestamp and username
-
-## TODO
-
 * [x] Optional: Rest API to read messages
-* [ ] Optional: Rest API to post messages
-* [ ] Optional: Ignore/unsub user (e.g. don't show me user X's messages)
+* [x] Optional: Rest API to post messages
