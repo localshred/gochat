@@ -32,67 +32,6 @@ type ChannelMessagesJSON struct {
 	Messages []*Message `json:"messages"`
 }
 
-func handleGetChannelMessages(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
-	channelName, ok := urlParams["channelName"]
-	if !ok {
-		channelName = "general"
-	}
-	channel := (*handler.Channels)[channelName]
-	payload := &ChannelMessagesJSON{
-		Messages: channel.Messages,
-	}
-
-	contentType := "application/json"
-	statusCode = 200
-	bytes, err := json.Marshal(payload)
-	if nil != err {
-		contentType = "text/plain"
-		statusCode = 404
-		bytes = []byte(err.Error())
-	}
-	return writeResponse(response, statusCode, contentType, bytes)
-}
-
-func handleGetChannels(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
-	channels := listChannels(*handler.Channels)
-	payload := &ChannelsJSON{
-		Channels: channels,
-	}
-
-	contentType := "application/json"
-	statusCode = 200
-	bytes, err := json.Marshal(payload)
-	if nil != err {
-		contentType = "text/plain"
-		statusCode = 404
-		bytes = []byte(err.Error())
-	}
-	return writeResponse(response, statusCode, contentType, bytes)
-}
-
-func handleNotFound(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
-	return writeResponse(response, 404, "text/plain", []byte("Not Found"))
-}
-
-func (handler *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	uri := request.RequestURI
-	method := request.Method
-	methodRouter, ok := endpoints[method]
-	if ok {
-		for routeTemplate, routeHandler := range methodRouter {
-			if matched := matchesEndpointURI(routeTemplate, uri); matched {
-				urlParams := getURLParams(routeTemplate, uri)
-				n, statusCode := routeHandler(handler, urlParams, response, request)
-				handler.Context.Logger.Debugf("%v %v %s %s", statusCode, n, method, uri)
-				return
-			}
-		}
-	}
-
-	n, statusCode := handleNotFound(handler, map[string]string{}, response, request)
-	handler.Context.Logger.Warnf("%v %v %s %s", statusCode, n, method, uri)
-}
-
 func getURLParams(template, uri string) (params map[string]string) {
 	params = map[string]string{}
 	if matched, _ := regexp.MatchString(".*/:[^/]+/?", template); !matched {
@@ -115,6 +54,35 @@ func getURLParams(template, uri string) (params map[string]string) {
 	return
 }
 
+func handleGetChannelMessages(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	channelName, ok := urlParams["channelName"]
+	if !ok {
+		channelName = "general"
+	}
+	channel := (*handler.Channels)[channelName]
+	payload := &ChannelMessagesJSON{
+		Messages: channel.Messages,
+	}
+
+	return writeJSONResponse(response, 200, payload)
+}
+
+func handleGetChannels(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	channels := listChannels(*handler.Channels)
+	payload := &ChannelsJSON{
+		Channels: channels,
+	}
+
+	return writeJSONResponse(response, 200, payload)
+}
+	}
+	return writeResponse(response, statusCode, contentType, bytes)
+}
+
+func handleNotFound(handler *HTTPHandler, urlParams map[string]string, response http.ResponseWriter, request *http.Request) (n int, statusCode int) {
+	return writeResponse(response, 404, "text/plain", []byte("Not Found"))
+}
+
 func matchesEndpointURI(endpoint, uri string) (matched bool) {
 	matched = false
 	re, err := regexp.Compile("/:[^/]+")
@@ -122,12 +90,42 @@ func matchesEndpointURI(endpoint, uri string) (matched bool) {
 		return
 	}
 	patternString := re.ReplaceAllLiteralString(regexp.QuoteMeta(endpoint), "/[^/]+")
-	re, err = regexp.Compile(patternString)
+	re, err = regexp.Compile(fmt.Sprintf("^%s/?$", patternString))
 	if nil != err {
 		return
 	}
 	matched = re.MatchString(uri)
 	return
+}
+
+func (handler *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	uri := request.RequestURI
+	method := request.Method
+	methodRouter, ok := endpoints[method]
+	if ok {
+		for routeTemplate, routeHandler := range methodRouter {
+			if matched := matchesEndpointURI(routeTemplate, uri); matched {
+				urlParams := getURLParams(routeTemplate, uri)
+				n, statusCode := routeHandler(handler, urlParams, response, request)
+				handler.Context.Logger.Debugf("%v %v %s %s", statusCode, n, method, uri)
+				return
+			}
+		}
+	}
+
+	n, statusCode := handleNotFound(handler, map[string]string{}, response, request)
+	handler.Context.Logger.Warnf("%v %v %s %s", statusCode, n, method, uri)
+}
+
+func writeJSONResponse(response http.ResponseWriter, statusCode int, payload interface{}) (int, int) {
+	contentType := "application/json"
+	bytes, err := json.Marshal(payload)
+	if nil != err {
+		contentType = "text/plain"
+		statusCode = 404
+		bytes = []byte(err.Error())
+	}
+	return writeResponse(response, statusCode, contentType, bytes)
 }
 
 func writeResponse(response http.ResponseWriter, statusCode int, contentType string, bytes []byte) (int, int) {
